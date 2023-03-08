@@ -24,17 +24,16 @@ export const createPhotoRules = [
 
 
 export const updatePhotoRules = [
-	body('title').trim().exists()
-	.withMessage('title is requied').bail()
-	.isString().withMessage('title has to be letters or numbers')
+	body('title').trim().optional().isString()
+	.withMessage('title has to be letters or numbers')
 	.bail().isLength({ min: 3 }).withMessage('title must be at least 3 chars long'),
 
 	body('url').trim().optional().isURL()
-	.isString().withMessage('URL has to be a valid URL-adress'),
+	.withMessage('URL has to be a valid URL-adress'),
 
 
 	body('comment').trim().optional().isString()
 	.withMessage('comment must be chars').bail()
-	.bail().isLength({ min: 3 }).withMessage('comment must be at least 3 chars long'),
+	.isLength({ min: 3 }).withMessage('comment must be at least 3 chars long'),
 
 ]
