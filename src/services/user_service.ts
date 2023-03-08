@@ -1,5 +1,5 @@
 import prisma from "../prisma";
-import { CreatePhotoData, CreateUserData, UpdatePhotoData, UpdateUserData } from '../types'
+import { CreateUserData, UpdateUserData } from '../types'
 
 /**
  * Get a user by id

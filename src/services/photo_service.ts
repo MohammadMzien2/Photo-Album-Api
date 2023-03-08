@@ -7,7 +7,7 @@ import { CreatePhotoData, UpdatePhotoData } from '../types'
 export const getPhotos = async (sub: number) => {
 	return await prisma.photo.findMany({
 		where: {
-			user_id: sub
+			user_id: sub,
 		},
 		select: {
 			id: true,
@@ -59,7 +59,7 @@ export const updatePhoto = async (photoId: number, data: UpdatePhotoData) => {
 	})
 }
 
-export const deletePhoto = async (photoId: number ) => {
+export const deletePhoto = async (photoId: number) => {
 	return await prisma.photo.delete({
 		where: {
 			id: photoId,
