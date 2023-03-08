@@ -1,5 +1,5 @@
 import prisma from "../prisma";
-import { connectPhotosData, CreateAlbumData, CreatePhotoData, UpdateAlbumData, UpdatePhotoData } from '../types'
+import { connectPhotosData, CreateAlbumData, UpdateAlbumData } from '../types'
 
 /**
  * Get all albums
@@ -86,7 +86,7 @@ export const removePhoto = async (albumId: number, photoId: number) => {
 			id: albumId,
 		},
 		data: {
-			photos: {disconnect: {id: photoId}}
+			photos: { disconnect: { id: photoId } }
 		}
 	})
 }
@@ -94,7 +94,7 @@ export const removePhoto = async (albumId: number, photoId: number) => {
 /**
  *
  */
-export const deleteAlbum = async (albumId:  number) => {
+export const deleteAlbum = async (albumId: number) => {
 	return await prisma.album.delete({
 		where: {
 			id: albumId,

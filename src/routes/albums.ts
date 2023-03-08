@@ -1,5 +1,5 @@
 import express from 'express'
-import { connectPhotosRules, createAlbumRules, updateAlbumRules } from '../validations/album_rules'
+import { createAlbumRules, updateAlbumRules } from '../validations/album_rules'
 import { index, show, store, update } from '../controllers/album_controller'
 const router = express.Router()
 
