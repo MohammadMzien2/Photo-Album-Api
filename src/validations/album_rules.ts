@@ -26,6 +26,6 @@ export const connectPhotosRules = [
 	body('photo_id').exists()
 		.withMessage('photo_id is required').bail()
 		.isArray().withMessage('this must be an array')
-		.bail().withMessage('photo_id must be an array of numbers')
+		.bail().isInt().withMessage('photo_id must be an array of numbers'),
 
 ]
