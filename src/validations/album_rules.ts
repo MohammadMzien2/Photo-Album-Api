@@ -10,15 +10,11 @@ export const createAlbumRules = [
 ]
 
 
-
-
 export const updateAlbumRules = [
 	body('title').trim().exists()
 	.withMessage('title is requied').bail()
 	.isString().withMessage('title has to be letters or numbers')
 	.bail().isLength({ min: 3 }).withMessage('title must be at least 3 chars long')
-
-
 ]
 
 

@@ -129,7 +129,7 @@ export const refresh = (req: Request, res: Response) => {
 
 	const [authSchema, token] = req.headers.authorization.split(" ")
 
-	if (authSchema.toLocaleLowerCase() !== "bearer") {
+	if (authSchema.toLowerCase() !== "bearer") {
 		debug("Authorization schema isn't Bearer")
 
 	return res.status(401).send({

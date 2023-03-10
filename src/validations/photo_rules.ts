@@ -22,7 +22,6 @@ export const createPhotoRules = [
 ]
 
 
-
 export const updatePhotoRules = [
 	body('title').trim().optional().isString()
 	.withMessage('title has to be letters or numbers')

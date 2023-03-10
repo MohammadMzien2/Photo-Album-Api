@@ -22,7 +22,7 @@ export const createUserRules = [
 		.isString().withMessage('password has to be letters or numbers')
 		.bail().isLength({ min: 6 }).withMessage('password must be at least 6 chars long'),
 
-	body('fist_name').trim().exists()
+	body('first_name').trim().exists()
 		.withMessage('fist_name is requied').bail()
 		.isString().withMessage('fist_name has to be letters or numbers')
 		.bail().isLength({ min: 3 }).withMessage('fist_name must be at least 3 chars long'),
@@ -72,7 +72,7 @@ export const updateUserRules = [
 
 
 
-	body('fist_name').trim().optional()
+	body('first_name').trim().optional()
 		.isString().withMessage('fist_name has to be letters or numbers')
 		.bail().isLength({ min: 3 }).withMessage('fist_name must be at least 3 chars long'),
 

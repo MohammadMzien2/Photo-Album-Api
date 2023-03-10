@@ -11,7 +11,7 @@ router.get('/', index)
 /**
  * GET /resource/:resourceId
  */
-router.get('/resourceId', show)
+router.get('/:resourceId', show)
 
 /**
  * POST /resource

@@ -42,7 +42,7 @@ export const createAlbum = async (data: CreateAlbumData) => {
 	return await prisma.album.create({
 		data: {
 			title: data.title,
-			user: { connect: { id: data.user_id } }
+			user: { connect: {id: data.user_id } }
 		}
 	})
 }
@@ -92,7 +92,7 @@ export const removePhoto = async (albumId: number, photoId: number) => {
 }
 
 /**
- *
+ * Delete album
  */
 export const deleteAlbum = async (albumId: number) => {
 	return await prisma.album.delete({

@@ -9,7 +9,7 @@ const debug = Debug('prisma-books:jwt')
  * validate jwt access token
  */
 export const validateToken = (req: Request, res: Response, next: NextFunction) => {
-	debug("hello from jwt")
+	debug("hello from auth/jwt")
 
 
 if (!req.headers.authorization) {
