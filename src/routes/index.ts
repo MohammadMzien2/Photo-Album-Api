@@ -41,6 +41,6 @@ router.post('/refresh', refresh)
  * POST /register a profile
  */
 
-router.post('register', createUserRules, register)
+router.post('/register', createUserRules, register)
 
 export default router
