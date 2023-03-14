@@ -26,8 +26,10 @@ export const basic = async (req: Request, res: Response, next: NextFunction) => 
 
 	const decodedPayload = Buffer.from(base64Payload, "base64").toString("ascii")
 
+	//split decodedPayload
 	const [email, password] = decodedPayload.split(':')
 
+		//Get user from db
 	const user = await getUserByEmail(email)
 	if (!user) {
 		return res.status(401).send({
