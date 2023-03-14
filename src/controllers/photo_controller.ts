@@ -1,8 +1,8 @@
 import Debug from 'debug'
 import { Request, Response } from 'express'
-import { matchedData, validationResult } from 'express-validator'
-import { getPhoto, getPhotos, createPhoto, updatePhoto, deletePhoto } from '../services/photo_service'
-
+import { validationResult } from 'express-validator'
+import { getPhoto, getPhotos, createPhoto } from '../services/photo_service'
+import prisma from '../prisma'
 
 // Create a new debug
 const debug = Debug('REST-API-fotoapp:photo_controller')
@@ -11,121 +11,98 @@ const debug = Debug('REST-API-fotoapp:photo_controller')
  * Get all photos
  */
 export const index = async (req: Request, res: Response) => {
-	try {
-		const photos = await getPhotos(req.token!.sub)
+	const userId = Number(req.user!.id)
 
-		res.send({
+	try{
+		const photo = await getPhotos(userId)
+
+		res.status(200).send({
 			status: "success",
-			data: photos,
+			data: photo,
 		})
-	} catch (err) {
-		debug("Error thrown when looking for photos", err)
-		res.status(500).send({ status: "error", message: "Something went wrong" })
+	}catch(err) {
+		res.status(500).send({
+			status: "error",
+			message: "Something went wrong"
+		})
 	}
 }
 
 /**
- * Get a single photo
+ * Get single photo
  */
-
 export const show = async (req: Request, res: Response) => {
 	const photoId = Number(req.params.photoId)
 
-	try {
-		const photo = await getPhoto(photoId, req.token!.sub)
-
-		res.send({
-			status: "success",
-			data: photo,
+	try{
+		const photo = await getPhoto(photoId)
+		if(Number(photo.user_id) !== Number(req.user!.id)){
+			res.status(403).send({
+				status: "error",
+				message: "Not your photo"
+			})
+		} else if(Number(photo.user_id) === Number(req.user!.id)){
+			res.status(200).send({
+				status: "success",
+				data: photo
+			})
+		}
+	} catch(err){
+		res.status(404).send({
+			message: "Not found",
 		})
-	} catch (err) {
-		debug("Error thrown when looking for photo o%", req.params.photoId, err)
-		 return res.status(404).send({ status: "error", message: "Don't found" })
-
 	}
 }
 
 /**
- * Create a photo
+ * Post photos
  */
 export const store = async (req: Request, res: Response) => {
-	// Check for validation errors
-	const validationErrors = validationResult(req)
-	if (!validationErrors.isEmpty()) {
+	const validationErros = validationResult(req)
+	if(!validationErros.isEmpty()) {
 		return res.status(400).send({
 			status: "fail",
-			data: validationErrors.array(),
+			data: validationErros.array()
 		})
-	}
-
-	//Get the validated data from request
-	const validatedData = matchedData(req)
-	try {
+	}try{
 		const photo = await createPhoto({
-			title: validatedData.title,
-			url: validatedData.url,
-			comment: validatedData.comment,
-			user_id: req.token!.sub,
+			title: req.body.title,
+			url: req.body.url,
+			comment: req.body.comment,
+			user_id: req.user!.id
 		})
-		res.send({
+		res.status(200).send({
 			status: "success",
-			data: photo,
+			data: photo
 		})
-	} catch (err) {
-		debug("Error thrown when creating photo o%", req.params.photoId, err)
-		return res.status(404).send({ status: "error", message: "Don't found" })
-
+	}catch(err){
+		res.status(500).send({
+			status: "error",
+			message: "Something went wrong"
+		})
 	}
 }
 
 /**
- * Update a photo
+ * PATCH update photo
  */
 export const update = async (req: Request, res: Response) => {
 	const photoId = Number(req.params.photoId)
 
-	//Check for validation errors
-	const validationErrors = validationResult(req)
-	if (!validationErrors.isEmpty()) {
-		return res.status(400).send({
-			status: "fail",
-			data: validationErrors.array(),
+	try{
+		const photo = await prisma.photo.update({
+			where: {
+				id: photoId
+			},
+			data: req.body
+		})
+		return res.status(200).send(photo)
+	}catch(err) {
+		return res.status(500).send({
+			status: "error",
+			message: "Didn't work"
 		})
 	}
-	//Get only the validated data from request
-	const validatedData = matchedData(req)
-	try {
-		const foudnPhotoId = await getPhoto(photoId, req.token!.sub)
-		const photo = await updatePhoto(foudnPhotoId.id, validatedData)
-
-		res.send({
-			status: "success",
-			data: photo,
-		})
-	} catch (err) {
-		debug("Error thrown when updating photo o%", req.params.photoId, err)
-		res.status(404).send({ status: "error", message: "Don't found" })
-	}
-}
-
-/**
- * Delete photo
- */
-
-export const destroy = async (req: Request, res: Response) => {
-	const photoId = Number(req.params.photoId)
-
-	try {
-		const foudnPhotoId = await getPhoto(photoId, req.token!.sub)
-		await deletePhoto(foudnPhotoId.id)
-
-		res.send({
-			status: "success",
-			data: null,
-		})
-	} catch (err) {
-		debug("Error thrown when deleting photo o%", req.params.photoId, err)
-		return res.status(404).send({ status: "error", message: "Don't found" })
 
 	}
-}
+

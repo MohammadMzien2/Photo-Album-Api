@@ -1,43 +1,40 @@
 import prisma from "../prisma";
-import { CreatePhotoData, UpdatePhotoData } from '../types'
+import { CreatePhotoData } from '../types'
 
 /**
  * Get all photos
  */
-export const getPhotos = async (sub: number) => {
-	return await prisma.photo.findMany({
-		where: {
-			user_id: sub,
-		},
-		select: {
-			id: true,
-			title: true,
-			url: true,
-			comment: true,
+export const getPhotos = async (userId: number) => {
+	return await prisma.photo.findMany(
+		{
+			where: {
+				user_id: userId
+			}
 		}
-	})
+	)
 }
 
 /**
  * Get a single photo
  */
-export const getPhoto = async (photoId: number, sub: number) => {
+export const getPhoto = async (photoId: number) => {
 	return await prisma.photo.findFirstOrThrow({
 		where: {
-			id: photoId,
-			user_id: sub,
+			id: photoId
 		},
 		select: {
 			id: true,
 			title: true,
 			url: true,
 			comment: true,
+			user_id: true,
+
 		}
 	})
 }
 
 /**
- * Create a photo
+ * Post photos
  */
 export const createPhoto = async (data: CreatePhotoData) => {
 	return await prisma.photo.create({
@@ -45,24 +42,11 @@ export const createPhoto = async (data: CreatePhotoData) => {
 			title: data.title,
 			url: data.url,
 			comment: data.comment,
-			user: { connect: {id: data.user_id}}
+			user: {
+				connect: {
+					id: data.user_id
+				}
+			}
 		}
-	})
-}
-
-export const updatePhoto = async (photoId: number, data: UpdatePhotoData) => {
-	return await prisma.photo.update({
-		where: {
-			id: photoId,
-		},
-		data,
-	})
-}
-
-export const deletePhoto = async (photoId: number) => {
-	return await prisma.photo.delete({
-		where: {
-			id: photoId,
-		},
 	})
 }

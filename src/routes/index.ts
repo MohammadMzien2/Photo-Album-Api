@@ -1,9 +1,10 @@
 import albums from './albums'
 import photos from './photos'
+import user from './users'
 import express from 'express'
-import { validateToken } from '../middlewares/auth/jwt'
-import { login, refresh, register } from '../controllers/user_controller'
-import { createUserRules, loginUserRules } from '../validations/user_rules'
+import { basic } from '../middlewares/auth/basic'
+import { register } from '../controllers/user_controller'
+import { createUserRules } from '../validations/user_rules'
 
 //Instantiate a new router
 const router = express.Router()
@@ -20,22 +21,12 @@ router.get('/', (req, res) => {
 /**
  * albums of photos
  */
-router.use('/albums', validateToken, albums)
+router.use('/albums', basic, albums)
 
 /**
  * photos from user
  */
-router.use('/photos', validateToken, photos)
-
-/**
- * POST/ login to profile
- */
-router.post('/login', loginUserRules, login)
-
-/**
- * POST/ refresh the profile login
- */
-router.post('/refresh', refresh)
+router.use('/photos', basic, photos)
 
 /**
  * POST /register a profile

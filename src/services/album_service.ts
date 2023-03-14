@@ -1,103 +1,49 @@
 import prisma from "../prisma";
-import { connectPhotosData, CreateAlbumData, UpdateAlbumData } from '../types'
+import { CreateAlbumData } from '../types'
 
 /**
  * Get all albums
  */
-export const getAlbums = async (sub: number) => {
-	return await prisma.album.findMany({
-		where: {
-			user_id: sub,
-		},
-		select: {
-			id: true,
-			title: true,
-			user_id: true,
+export const getAlbums = async (userId: number) => {
+	return await prisma.album.findMany(
+		{
+			where: {
+				user_id: userId
+			}
 		}
-	})
+	)
 }
 
 /**
  * Get a single album
  */
-
-export const getAlbum = async (albumId: number, sub: number) => {
+export const getAlbum = async (albumId: number) => {
 	return await prisma.album.findFirstOrThrow({
 		where: {
-			id: albumId,
-			user_id: sub,
+			id: albumId
 		},
 		select: {
 			id: true,
 			title: true,
 			photos: true,
-		},
+			user_id: true,
+		}
 	})
 }
 
+
 /**
- * Create an album
+ * Post albums
  */
 export const createAlbum = async (data: CreateAlbumData) => {
 	return await prisma.album.create({
 		data: {
 			title: data.title,
-			user: { connect: {id: data.user_id } }
-		}
-	})
-}
-
-/**
- * Update an album
- */
-
-export const updateAlbum = async (albumId: number, data: UpdateAlbumData) => {
-	return await prisma.album.update({
-		where: {
-			id: albumId
-		},
-		data
-	})
-}
-
-/**
- * Add a photo to an album
- */
-
-export const connectPhotos = async (albumId: number, photoIds: connectPhotosData) => {
-	return await prisma.album.update({
-		where: {
-			id: albumId
-		},
-		data: {
-			photos: {
-				connect: photoIds,
+			user: {
+				connect: {
+					id: data.user_id
+				}
 			}
-		},
-	})
-}
-
-/**
- * Reomve a photo from an album
- */
-export const removePhoto = async (albumId: number, photoId: number) => {
-	return await prisma.album.update({
-		where: {
-			id: albumId,
-		},
-		data: {
-			photos: { disconnect: { id: photoId } }
 		}
-	})
-}
-
-/**
- * Delete album
- */
-export const deleteAlbum = async (albumId: number) => {
-	return await prisma.album.delete({
-		where: {
-			id: albumId,
-		},
 	})
 }

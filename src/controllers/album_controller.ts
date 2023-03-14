@@ -1,9 +1,9 @@
 import Debug from 'debug'
 import { Request, Response } from 'express'
-import { connectPhotos, createAlbum, deleteAlbum, getAlbum, getAlbums, removePhoto, updateAlbum } from '../services/album_service'
-import { matchedData, validationResult } from 'express-validator'
-import { getPhoto, getPhotos } from '../services/photo_service'
-
+import { getPhoto } from '../services/photo_service'
+import { validationResult } from 'express-validator'
+import { createAlbum, getAlbum, getAlbums } from '../services/album_service'
+import prisma from '../prisma'
 
 // Create a new debug
 const debug = Debug('REST-API-fotoapp:album_controller')
@@ -12,191 +12,151 @@ const debug = Debug('REST-API-fotoapp:album_controller')
  * Get all albums
  */
 export const index = async (req: Request, res: Response) => {
-	try {
-		const albums = await getAlbums(req.token!.sub)
+	const userId = Number(req.user!.id)
 
-		res.send({
+	try{
+		const album = await getAlbums(userId)
+
+		res.status(200).send({
 			status: "success",
-			data: albums,
+			data: album,
 		})
-	} catch (err) {
-		debug("Error thrown when finding albums", err)
-		res.status(500).send({ status: "error", message: "Something went wrong" })
+	}catch(err){
+		debug("Error thrown when finding albums: %o, user: %o:")
+		res.status(500).send({
+			status: "error",
+			message: "Something went wrong"
+		})
 	}
 }
 
 /**
- * Get a single album
+ * Get single album
  */
 export const show = async (req: Request, res: Response) => {
 	const albumId = Number(req.params.albumId)
 
-	try {
-		const album = await getAlbum(albumId, req.token!.sub)
+	try{
+		const album = await getAlbum(albumId)
 
-		res.send({
-			status: "success",
-			data: album,
+		if(Number(album.user_id) !== Number(req.user!.id)){
+			res.status(403).send({
+				status: "error",
+				message: "Dont found"
+			})
+		}else if(Number(album.user_id) === Number(req.user!.id)) {
+			res.status(200).send({
+				status: "success",
+				data: album
+			})
+		}
+	}catch(err){
+		debug("Error thrown finding albumId %o", albumId)
+		res.status(404).send({
+			status: "error",
+			message: "Dont found",
 		})
-	} catch (err) {
-		debug("Error thrown when finding albums o%", req.params.albumId, err)
-		return res.status(404).send({ status: "error", message: "Don't found" })
 	}
 }
 
 /**
- * Create an album
+ * POST albums
  */
-export const store = async (req: Request, res: Response) => {
+
+export const store = async(req: Request, res: Response) => {
 	const validationErrors = validationResult(req)
-	if (!validationErrors.isEmpty()) {
+	if(!validationErrors.isEmpty()){
 		return res.status(400).send({
 			status: "fail",
 			data: validationErrors.array(),
 		})
 	}
-	// Get only the validated data for the request
-	const validatedData = matchedData(req)
-	try {
+	try{
 		const album = await createAlbum({
-			title: validatedData.title,
-			user_id: req.token!.sub,
+			title: req.body.title,
+			user_id: req.user!.id
 		})
-		res.send({
+		res.status(200).send({
 			status: "success",
-			data: album,
+			data: album
 		})
-	} catch (err) {
-		debug("Error thrown when creating an album o%", req.params.albumId, err)
-		return res.status(404).send({ status: "error", message: "Don't found" })
+	}catch(err){
+		res.status(500).send({
+			status: "error",
+			message: "Something went wrong"
+		})
+	}
+}
+/**
+ * Link a photo to an user album
+ */
+export const addPhoto = async(req: Request, res: Response) => {
+	const photo_id = Number(req.body.photo_id)
+	const albumId = Number(req.params.albumId)
+
+	const photo = await getPhoto(photo_id)
+	const album = await getAlbum(albumId)
+
+	if(Number(req.user!.id) !== album.user_id){
+		debug("Photos userid: %o, album userId: %o", photo.user_id, album.user_id)
+		return res.status(400).send({
+			status: "error",
+			message: "Dont found"
+		})
+	}
+	if(Number(req.user!.id) !== photo.user_id) {
+		return res.status(400).send({
+			status: "error",
+			message: "Dont found"
+		})
+	}
+
+	try{
+		const result = await prisma.album.update({
+			where: {
+				id: Number(req.params.albumId)
+			},
+			data: {
+				photos:{
+					connect:{
+						id: req.body.photo_id,
+					}
+				}
+			},
+			include: {
+				photos: true
+			}
+		})
+		return res.status(200).send({
+			status: "success",
+			data: result
+		})
+	}catch(err){
+		return res.status(500).send({
+			status: "error",
+			message: "Something went wrong"
+		})
 	}
 }
 
 /**
- * Update an album
+ * PATCH update album
  */
 export const update = async (req: Request, res: Response) => {
 	const albumId = Number(req.params.albumId)
 
-	//Check validation error
-	const validationErrors = validationResult(req)
-	if (!validationErrors.isEmpty()) {
-		return res.status(400).send({
-			status: "fail",
-			data: validationErrors.array()
+	try{
+		const album = await prisma.album.update({
+			where: {
+				id: albumId
+			},
+			data: req.body
 		})
-	}
-
-	// Get only validated data from the request
-	const validatedData = matchedData(req)
-	try {
-		const foundAlbum = await getAlbum(albumId, req.token!.sub)
-
-		const album = await updateAlbum(foundAlbum.id, validatedData)
-
-		res.send({
-			status: "success",
-			data: album,
+		return res.status(200).send(album)
+	}catch(err){
+		return res.status(500).send({
+			status: "error",
+			message: "Didnt work"
 		})
-	} catch (err) {
-		debug("Error thrown when updating album o%", req.params.albumId, err)
-		return res.status(404).send({ status: "error", message: "Don't found" })
-	}
-}
-
-/**
- * Add several photos to an album
- */
-export const addToAlbum = async (req: Request, res: Response) => {
-	const albumId = Number(req.params.albumId)
-
-	//Check validation errors
-	const validationErrors = validationResult(req)
-	if (!validationErrors.isEmpty()) {
-		return res.status(400).send({
-			status: "fail",
-			data: validationErrors.array(),
-		})
-	}
-
-	//Get the validated date from request
-	const validatedData = matchedData(req)
-	debug('the validated data:', validatedData)
-
-	try {
-		const foundAlbum = await getAlbum(albumId, req.token!.sub)
-
-		const usersPhotos = await getPhotos(req.token!.sub)
-
-		const allPhotosIncluded = validatedData.photo_id.every((photoId: number) => {
-			return usersPhotos.find(userPhoto => userPhoto.id === photoId) !== undefined
-		})
-
-		//if not
-		if (!allPhotosIncluded) {
-			return res.status(400).send({
-				status: "fail",
-				message: "one or more photo_id don't exist"
-			})
-		}
-		//if all photos_id exist
-		const photoIds = validatedData.photo_id.map((photoId: Number) => {
-			return {
-				id: photoId,
-			}
-		})
-
-		// connecting photos to album
-		await connectPhotos(foundAlbum.id, photoIds)
-
-		res.send({
-			status: "success",
-			data: null,
-		})
-	} catch (err) {
-		debug("Error thrown when updating album o%", req.params.albumId, err)
-		return res.status(404).send({ status: "error", message: "Don't found" })
-	}
-}
-
-/**
- * Delete a photo from an album
- */
-export const remove = async (req: Request, res: Response) => {
-	const albumId = Number(req.params.albumId)
-	const photoId = Number(req.params.photoId)
-
-	try {
-		const foundAlbum = await getAlbum(albumId, req.token!.sub)
-		const foudnPhoto = await getPhoto(photoId, req.token!.sub)
-		await removePhoto(foundAlbum.id, foudnPhoto.id)
-
-		res.send({
-			status: "success",
-			data: null
-		})
-	} catch (err) {
-		debug("Error thrown when deleting photo o%", photoId, albumId, err)
-		return res.status(404).send({ status: "error", message: "Don't found" })
-	}
-}
-
-/**
- * Delete an albums
- */
-export const destroy = async (req: Request, res: Response) => {
-	const albumId = Number(req.params.albumId)
-
-	try {
-		const foundAlbumId = await getAlbum(albumId, req.token!.sub)
-		await deleteAlbum(foundAlbumId.id)
-
-		res.send({
-			status: "success",
-			data: null,
-		})
-	} catch (err) {
-		debug("Error thrown when deleting album o%", albumId, err)
-		return res.status(404).send({ status: "error", message: "Don't found" })
 	}
 }

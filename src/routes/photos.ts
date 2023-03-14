@@ -1,7 +1,6 @@
 import express from 'express'
-import { createPhotoRules, updatePhotoRules } from '../validations/photo_rules'
 import { index, show, store, update } from '../controllers/photo_controller'
-import { validateToken } from '../middlewares/auth/jwt'
+import { body } from 'express-validator'
 const router = express.Router()
 
 /**
@@ -20,12 +19,20 @@ router.get('/:photoId', show)
  * POST /photo
  * Create a new photo
  */
-router.post('/', createPhotoRules, store)
+router.post('/', [
+	body('title').isString().bail().trim().isLength({ min: 3 }),
+	body('url').isURL().trim(),
+	body('comment').optional().isString().bail().isLength({ min: 3 })
+], store)
 
 /**
  * PATCH/ photo/:photoId
  * Update a photo
  */
-router.patch('/:photoId', updatePhotoRules, update)
+router.patch('/:photoId', [
+body('title').isString().bail().trim().isLength({ min: 3 }),
+body('url').isURL().trim(),
+body('comment').isString().trim().bail().isLength({ min: 3 })
+], update)
 
 export default router
